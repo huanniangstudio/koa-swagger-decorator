@@ -2,7 +2,6 @@ import is from 'is-type-of';
 import { always, cond, equals, T } from 'ramda';
 import validator from 'validator';
 
-
 export interface Expect {
   required?: boolean;
   enum?: any[];
@@ -20,32 +19,26 @@ const cRequired = (input: any, expect: Expect = {}) => {
 
 const cNullable = (input: any, expect: Expect = {}) => {
   if (expect.nullable && is.null(input)) {
-    return { is: true, val: input};
+    return { is: true, val: input };
   }
   return { is: false, val: input };
 };
 
 const cEnum = (input: any, expect: Expect = {}) => {
   if (Array.isArray(expect.enum) && expect.enum.length) {
-    return expect.enum.includes(input)
-      ? { is: true, val: input }
-      : { is: false };
+    return expect.enum.includes(input) ? { is: true, val: input } : { is: false };
   }
   return { is: true, val: input };
 };
 
 const cDefault = (input: any, expect: Expect = {}) =>
-  expect.default !== undefined && input === undefined
-    ? { is: true, val: expect.default }
-    : { is: true, val: input };
+  expect.default !== undefined && input === undefined ? { is: true, val: expect.default } : { is: true, val: input };
 
 const cString = (val: any, expect: Expect) => {
   if (!cRequired(val, expect).is) return { is: false };
   if (expect.enum && !cEnum(val, expect).is) return { is: false };
   if (expect.format && !cFormat(val, expect).is) return { is: false };
-  return typeof val === 'string'
-    ? { is: true, val: String(val) }
-    : { is: false };
+  return typeof val === 'string' ? { is: true, val: String(val) } : { is: false };
 };
 
 const cFormat = (val: any, expect: Expect) => {
@@ -55,9 +48,9 @@ const cFormat = (val: any, expect: Expect) => {
   if (expect.format === 'byte' && !validator.isBase64(val)) return { is: false };
   if (expect.format === 'ipv4' && !validator.isIP(val, 4)) return { is: false };
   if (expect.format === 'ipv6' && !validator.isIP(val, 6)) return { is: false };
-  
+
   return { is: true, val: String(val) };
-}
+};
 
 const cNum = (val: any, expect: Expect) => {
   if (!cRequired(val, expect).is) return { is: false };
@@ -65,7 +58,7 @@ const cNum = (val: any, expect: Expect) => {
   if (isNaN(Number(val)) || val === '') return { is: false };
   if (expect.minimum && expect.minimum > Number(val)) return { is: false };
   if (expect.maximum && expect.maximum < Number(val)) return { is: false };
-  
+
   return { is: true, val: Number(val) };
 };
 
@@ -117,7 +110,6 @@ const cObject = (input: any, expect: Expect = {}) => {
   return res;
 };
 
-
 // {
 //   type: 'array', required: true, items: 'string', example: ['填写内容']
 // }
@@ -145,8 +137,7 @@ const cArray = (input: any, expect: Expect) => {
 
   // items 字段为字符串的情况: array 中的内容是基本类型, 或者为object|array类型但不需要校验内部字段
   if (is.string(expect.items)) {
-    const check: Function = (func: Function) => () =>
-      input.length === input.filter(item => func(item)).length;
+    const check: Function = (func: Function) => () => input.length === input.filter((item) => func(item)).length;
 
     const condition = cond([
       [equals('string'), check(is.string)],
@@ -176,7 +167,7 @@ const check = (input: any, expect: Expect) => {
     [T, () => ({ is: true, val: input })] // 其他类型不做校验，直接返回原数据
   ]);
 
-  return condition(expect.type);
+  return condition(expect.schema.type);
 };
 const Checker = {
   required: cRequired,

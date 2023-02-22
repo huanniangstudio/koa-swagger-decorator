@@ -1,19 +1,13 @@
+import { Dictionary } from 'ramda';
 import init from './swaggerTemplate';
 import { getPath, sortObject } from './utils';
-import { Dictionary } from 'ramda';
 /**
  * build swagger json from apiObjects
  */
-const swaggerJSON = (options: {[name: string]: any} = {}, apiObjects: any) => {
-  const {
-    title,
-    description,
-    version,
-    prefix = '',
-    swaggerOptions = {}
-  } = options;
+const swaggerJSON = (options: { [name: string]: any } = {}, apiObjects: any) => {
+  const { title, description, version, prefix = '', swaggerOptions = {} } = options;
   const swaggerJSON: any = init(title, description, version, swaggerOptions);
-  const paths: Dictionary<{[method: string]: any}> = {};
+  const paths: Dictionary<{ [method: string]: any }> = {};
   Object.keys(apiObjects).forEach((key) => {
     const value = apiObjects[key];
     if (!Object.keys(value).includes('request')) {
@@ -40,7 +34,7 @@ const swaggerJSON = (options: {[name: string]: any} = {}, apiObjects: any) => {
       deprecated
     } = value;
 
-    const parameters = [...pathParams, ...query, ...header, ...formData, ...body];
+    const parameters = [...pathParams, ...query, ...header, ...formData];
 
     // init path object first
     if (!paths[path]) {
@@ -54,7 +48,8 @@ const swaggerJSON = (options: {[name: string]: any} = {}, apiObjects: any) => {
       consumes,
       summary,
       description,
-      parameters,
+      parameters: parameters.length == 0 ? undefined : parameters,
+      requestBody: body.length == 0 ? undefined : body,
       responses,
       tags,
       security,
@@ -64,10 +59,14 @@ const swaggerJSON = (options: {[name: string]: any} = {}, apiObjects: any) => {
       paths[path]._order = order;
     }
   });
-  swaggerJSON.paths = sortObject(paths, (path, length) => path._order || length, (path) => {
-    const { _order, ...restOfPathData} = path;
-    return restOfPathData;
-  });
+  swaggerJSON.paths = sortObject(
+    paths,
+    (path, length) => path._order || length,
+    (path) => {
+      const { _order, ...restOfPathData } = path;
+      return restOfPathData;
+    }
+  );
   return swaggerJSON;
 };
 
